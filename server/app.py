@@ -3,8 +3,7 @@ from flask_restful import Api, Resource
 from flask_cors import CORS
 from config import db, app, bcrypt
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
-from models import Project
-from models import User
+from models import Project,User,Task
 from sqlalchemy import func
 import math
 from datetime import datetime
@@ -242,6 +241,93 @@ class ProjectsByID(Resource):
         else:
             return make_response(jsonify({'error': 'Project not found'}), 404)
 
+class Tasks(Resource):
+    def get(self):
+        all_tasks = Task.query.all()
+        tasks = [task.to_dict() for task in all_tasks]
+        return make_response(jsonify(tasks), 200)
+
+    @jwt_required()
+    def post(self):
+        data = request.get_json()
+        try:
+            project = Project.query.get(data['project_id'])
+            assigned_member = User.query.get(data['assigned_member_id'])
+
+            if not project:
+                return {"error": "Project not found"}, 404
+            if not assigned_member:
+                return {"error": "Assigned member not found"}, 404
+
+            deadline = None
+            if data.get('deadline'):
+                deadline = datetime.strptime(data['deadline'], '%Y-%m-%d').date()
+
+            new_task = Task(
+                task_name=data['task_name'],
+                description=data.get('description', ''),
+                status=data.get('status', 'pending'),
+                deadline=deadline,
+                project_id=project.id,
+                assigned_member_id=assigned_member.id
+            )
+
+            db.session.add(new_task)
+            db.session.commit()
+
+            return make_response(jsonify(new_task.to_dict()), 201)
+        except Exception as e:
+            return make_response(jsonify({'error': str(e)}), 500)
+
+class TasksByID(Resource):
+    def get(self, task_id):
+        task = Task.query.get(task_id)
+        if task:
+            return make_response(jsonify(task.to_dict()), 200)
+        else:
+            return make_response(jsonify({'error': 'Task not found'}), 404)
+
+    def put(self, task_id):
+        data = request.get_json()
+        task = Task.query.get(task_id)
+        if task:
+            try:
+                if 'task_name' in data:
+                    task.task_name = data['task_name']
+                if 'description' in data:
+                    task.description = data['description']
+                if 'status' in data:
+                    task.status = data['status']
+                if 'deadline' in data:
+                    task.deadline = datetime.strptime(data['deadline'], '%Y-%m-%d').date()
+                if 'project_id' in data:
+                    project = Project.query.get(data['project_id'])
+                    if project:
+                        task.project_id = data['project_id']
+                    else:
+                        return {'error': 'Project not found'}, 404
+                if 'assigned_member_id' in data:
+                    assigned_member = User.query.get(data['assigned_member_id'])
+                    if assigned_member:
+                        task.assigned_member_id = data['assigned_member_id']
+                    else:
+                        return {'error': 'Assigned member not found'}, 404
+
+                db.session.commit()
+                return make_response(jsonify(task.to_dict()), 200)
+            except Exception as e:
+                return make_response(jsonify({'error': str(e)}), 500)
+        else:
+            return make_response(jsonify({'error': 'Task not found'}), 404)
+
+    def delete(self, task_id):
+        task = Task.query.get(task_id)
+        if task:
+            db.session.delete(task)
+            db.session.commit()
+            return make_response(jsonify({'message': 'Task deleted successfully'}), 200)
+        else:
+            return make_response(jsonify({'error': 'Task not found'}), 404)
 # Register the resources with the API
 api.add_resource(Index, '/')
 api.add_resource(Login, '/login')
@@ -252,6 +338,8 @@ api.add_resource(Users, '/users')
 api.add_resource(UsersByID, '/users/<int:user_id>')
 api.add_resource(Projects, '/projects')
 api.add_resource(ProjectsByID, '/projects/<int:project_id>')
+api.add_resource(Tasks, '/tasks')
+api.add_resource(TasksByID, '/tasks/<int:task_id>')
 
 
 if __name__ == '__main__':
