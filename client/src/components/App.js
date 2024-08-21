@@ -1,15 +1,62 @@
 import '../App.css';
-import GroupPlacement from './GroupPlacement';
+import React from 'react';
+import { useState } from 'react';
+import { useEffect } from 'react';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Navbar from './Navbar';
-// import ProjectView from './ProjectView';
+import ProjectsView from './ProjectsView';
+import Login from './Login';
+import SignUp from './SignUp';
+import Dashboard from './Dashboard';
+import GroupPlacement from './GroupPlacement';
+import Settings from './Settings';
+import CalendarComponent from './CalenderComponent';
+import UpdateProfile from './UpdateProfile';
 
-function App() {
+const App = () => {
+  // const [user,setUser] = useState(null);
+
+  // useEffect(() => {
+    
+  //   fetch('/check-session',{
+  //   method: 'GET',
+  //   headers: {
+  //     'Authorization':`Bearer ${localStorage.getItem('JWT')}`
+  //   }}
+  //   )
+  //     .then(response => {
+  //       if (!response.ok) {
+  //         throw new Error('Network response was not ok');
+  //       }
+  //       return response.json();
+  //     })
+  //     .then(data => {
+  //       setUser(data)
+          
+        
+  //     })
+  //     .catch(error => {
+  //       console.error('Error checking session:', error);
+  //     });
+  // }, []);
+
   return (
-    <div className="App">
-      <Navbar/>
-      <GroupPlacement/>
-    </div>
+    <Router>
+      <div>
+        <Navbar  /> 
+        <Routes>
+          <Route path="/" element={<Login />} />
+          <Route path="/signup" element={<SignUp />} />
+          <Route path="/projects-view" element={<ProjectsView />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/group-placement" element={<GroupPlacement />} />
+          <Route path="/calendar" element={<CalendarComponent />} />
+          <Route path="/update-profile" element={<UpdateProfile />} /> 
+       </Routes>
+      </div>
+    </Router>
   );
-}
+};
 
 export default App;
