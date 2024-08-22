@@ -328,6 +328,44 @@ class TasksByID(Resource):
             return make_response(jsonify({'message': 'Task deleted successfully'}), 200)
         else:
             return make_response(jsonify({'error': 'Task not found'}), 404)
+        
+class ChangePassword(Resource):
+    @jwt_required()
+    def post(self):
+        data = request.get_json()
+        
+        # Validate required fields
+        required_fields = ['user_id', 'currentPassword', 'newPassword']
+        if not all(field in data for field in required_fields):
+            return make_response(jsonify({'error': 'Missing required fields'}), 400)
+
+        user_id = data['user_id']
+        current_password = data['currentPassword']
+        new_password = data['newPassword']
+        
+        # Fetch the user
+        user = User.query.get(user_id)
+        if not user:
+            return make_response(jsonify({'error': 'User not found'}), 404)
+
+        # Check current password
+        if not user.authenticate(current_password):
+            return make_response(jsonify({'error': 'Current password is incorrect'}), 400)
+
+        # Validate new password
+        if len(new_password) < 8:
+            return make_response(jsonify({'error': 'New password must be at least 8 characters long'}), 400)
+
+        # Update the password
+        try:
+            new_password_hash = bcrypt.generate_password_hash(new_password).decode('utf-8')
+            user._password_hash = new_password_hash
+            db.session.commit()
+            return make_response(jsonify({'message': 'Password updated successfully'}), 200)
+        except Exception as e:
+            return make_response(jsonify({'error': str(e)}), 500)
+        
+
 # Register the resources with the API
 api.add_resource(Index, '/')
 api.add_resource(Login, '/login')
@@ -340,6 +378,8 @@ api.add_resource(Projects, '/projects')
 api.add_resource(ProjectsByID, '/projects/<int:project_id>')
 api.add_resource(Tasks, '/tasks')
 api.add_resource(TasksByID, '/tasks/<int:task_id>')
+api.add_resource(ChangePassword, '/change_password')
+
 
 
 if __name__ == '__main__':

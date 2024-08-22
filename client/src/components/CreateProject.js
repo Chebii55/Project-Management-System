@@ -12,7 +12,8 @@ function CreateProject() {
     { task_name: "", description: "", deadline: "", assigned_member_id: "", status: "pending" },
   ]);
   const [error, setError] = useState(null);
-  const [successMessage, setSuccessMessage] = useState(null);
+  const [projectSuccessMessage, setProjectSuccessMessage] = useState(null);
+  const [taskSuccessMessage, setTaskSuccessMessage] = useState(null);
   const [userData, setUserData] = useState(null);
   const [projectId, setProjectId] = useState(null);
   const [showTaskForm, setShowTaskForm] = useState(false);
@@ -64,13 +65,6 @@ function CreateProject() {
       .catch(() => {
         setError("Failed to load members.");
       });
-
-    // Fetch or set initial data here if needed
-    setProjectName("Initial Project Name"); // example of autofill data
-    setDeadline("2024-09-30"); // example of autofill data
-    setDescription("This is a sample project description."); // example of autofill data
-    setPriority("high"); // example of autofill data
-
   }, []);
 
   const handleTaskChange = (index, field, value) => {
@@ -90,17 +84,10 @@ function CreateProject() {
     setTasks(tasks.filter((_, i) => i !== index));
   };
 
-  const logFormData = () => {
-    console.log("Project Info:", { projectName, deadline, description, priority });
-    console.log("Tasks Info:", tasks);
-  };
-
   const handleSubmitProject = async (e) => {
     e.preventDefault();
     setError(null);
-    setSuccessMessage(null);
-
-    logFormData(); // Log data before submitting
+    setProjectSuccessMessage(null);
 
     const token = getToken();
 
@@ -128,7 +115,7 @@ function CreateProject() {
       }
 
       setProjectId(result.id);
-      setSuccessMessage("Project created successfully!");
+      setProjectSuccessMessage("Project created successfully!");
       setShowTaskForm(true); // Show task form after project is created
     } catch (error) {
       setError(error.message);
@@ -138,9 +125,7 @@ function CreateProject() {
   const handleSubmitTasks = async (e) => {
     e.preventDefault();
     setError(null);
-    setSuccessMessage(null);
-
-    logFormData(); // Log data before submitting
+    setTaskSuccessMessage(null);
 
     if (!projectId) {
       setError("Project must be created before adding tasks.");
@@ -150,34 +135,33 @@ function CreateProject() {
     const token = getToken();
 
     try {
-      const response = await fetch("/tasks", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          project_id: projectId,
-          tasks: tasks.map(task => ({
+      for (const task of tasks) {
+        const response = await fetch("/tasks", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            project_id: projectId,
             assigned_member_id: task.assigned_member_id,
             deadline: task.deadline,
             description: task.description,
             status: task.status || "pending",
             task_name: task.task_name
-          })),
-        }),
-      });
+          }),
+        });
 
-      const result = await response.json();
+        const result = await response.json();
 
-      if (!response.ok) {
-        setError(result.error || "Failed to create tasks");
-        return;
+        if (!response.ok) {
+          throw new Error(result.error || "Failed to create task");
+        }
       }
 
-      setSuccessMessage("Tasks created successfully!");
+      setTaskSuccessMessage("Tasks created successfully!");
       setTasks([{ task_name: "", description: "", deadline: "", assigned_member_id: "", status: "pending" }]);
-      setShowTaskForm(false);
+      setShowTaskForm(true); // Keep the task form visible after tasks are created
     } catch (error) {
       setError(error.message);
     }
@@ -188,9 +172,9 @@ function CreateProject() {
       <Sidebar />
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="bg-white dark:bg-gray-700 h-full overflow-auto">
+        <div className="bg-white dark:bg-gray-800 h-full overflow-auto">
           <div className="relative pt-8">
-            <div className="absolute inset-0 h-1/2 dark:bg-gray-700"></div>
+            <div className="absolute inset-0 h-1/2 bg-gray-100 dark:bg-gray-800"></div>
             <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="bg-white dark:bg-gray-900 p-8 rounded-lg shadow-lg">
                 <h2 className="text-2xl font-extrabold text-gray-900 dark:text-white mb-6">
@@ -211,7 +195,7 @@ function CreateProject() {
                       value={projectName}
                       onChange={(e) => setProjectName(e.target.value)}
                       required
-                      className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                     />
                   </div>
 
@@ -228,7 +212,7 @@ function CreateProject() {
                       value={deadline}
                       onChange={(e) => setDeadline(e.target.value)}
                       required
-                      className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                     />
                   </div>
 
@@ -243,7 +227,7 @@ function CreateProject() {
                       id="description"
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
-                      className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                     />
                   </div>
 
@@ -258,7 +242,7 @@ function CreateProject() {
                       id="priority"
                       value={priority}
                       onChange={(e) => setPriority(e.target.value)}
-                      className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                     >
                       <option value="low">Low</option>
                       <option value="medium">Medium</option>
@@ -266,9 +250,20 @@ function CreateProject() {
                     </select>
                   </div>
 
+                  {error && (
+                    <div className="text-red-600 dark:text-red-400 mb-4">
+                      <p>{error}</p>
+                    </div>
+                  )}
+                  {projectSuccessMessage && (
+                    <div className="text-green-600 dark:text-green-400 mb-4">
+                      <p>{projectSuccessMessage}</p>
+                    </div>
+                  )}
+
                   <button
                     type="submit"
-                    className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-md"
                   >
                     Create Project
                   </button>
@@ -276,135 +271,136 @@ function CreateProject() {
 
                 {showTaskForm && (
                   <div className="mt-8">
-                    <h3 className="text-xl font-extrabold text-gray-900 dark:text-white mb-6">
-                      Add Tasks to the Project
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                      Add Tasks
                     </h3>
 
                     <form onSubmit={handleSubmitTasks}>
                       {tasks.map((task, index) => (
                         <div key={index} className="mb-6">
-                          <h4 className="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">
+                          <h4 className="text-md font-medium text-gray-900 dark:text-white mb-2">
                             Task {index + 1}
                           </h4>
 
                           <div className="mb-4">
                             <label
-                              htmlFor={`task_name_${index}`}
+                              htmlFor={`taskName-${index}`}
                               className="block text-sm font-medium text-gray-700 dark:text-gray-300"
                             >
                               Task Name
                             </label>
                             <input
                               type="text"
-                              id={`task_name_${index}`}
+                              id={`taskName-${index}`}
                               value={task.task_name}
                               onChange={(e) =>
                                 handleTaskChange(index, "task_name", e.target.value)
                               }
                               required
-                              className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                              className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                             />
                           </div>
 
                           <div className="mb-4">
                             <label
-                              htmlFor={`description_${index}`}
+                              htmlFor={`taskDescription-${index}`}
                               className="block text-sm font-medium text-gray-700 dark:text-gray-300"
                             >
-                              Task Description
+                              Description
                             </label>
                             <textarea
-                              id={`description_${index}`}
+                              id={`taskDescription-${index}`}
                               value={task.description}
                               onChange={(e) =>
                                 handleTaskChange(index, "description", e.target.value)
                               }
-                              required
-                              className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                              className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                             />
                           </div>
 
                           <div className="mb-4">
                             <label
-                              htmlFor={`deadline_${index}`}
+                              htmlFor={`taskDeadline-${index}`}
                               className="block text-sm font-medium text-gray-700 dark:text-gray-300"
                             >
-                              Task Deadline
+                              Deadline
                             </label>
                             <input
                               type="date"
-                              id={`deadline_${index}`}
+                              id={`taskDeadline-${index}`}
                               value={task.deadline}
                               onChange={(e) =>
                                 handleTaskChange(index, "deadline", e.target.value)
                               }
-                              required
-                              className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                              className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                             />
                           </div>
 
                           <div className="mb-4">
                             <label
-                              htmlFor={`assigned_member_id_${index}`}
+                              htmlFor={`assignedMember-${index}`}
                               className="block text-sm font-medium text-gray-700 dark:text-gray-300"
                             >
-                              Assigned Member
+                              Assign Member
                             </label>
                             <select
-                              id={`assigned_member_id_${index}`}
+                              id={`assignedMember-${index}`}
                               value={task.assigned_member_id}
                               onChange={(e) =>
                                 handleTaskChange(index, "assigned_member_id", e.target.value)
                               }
-                              required
-                              className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                              className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                             >
-                              <option value="">Select a member</option>
+                              <option value="" className="text-gray-500 dark:text-gray-400">
+                                Select Member
+                              </option>
                               {members.map((member) => (
-                                <option key={member.id} value={member.id}>
+                                <option key={member.id} value={member.id} className="text-gray-900 dark:text-white">
                                   {member.name}
                                 </option>
                               ))}
                             </select>
                           </div>
 
-                          <button
-                            type="button"
-                            onClick={() => removeTask(index)}
-                            className="text-red-600 hover:text-red-900 focus:outline-none"
-                          >
-                            Remove Task
-                          </button>
+                          <div className="flex justify-between">
+                            <button
+                              type="button"
+                              onClick={() => removeTask(index)}
+                              className="text-red-600 dark:text-red-400"
+                            >
+                              Remove Task
+                            </button>
+                            {tasks.length === index + 1 && (
+                              <button
+                                type="button"
+                                onClick={addTask}
+                                className="text-indigo-600 dark:text-indigo-400"
+                              >
+                                Add Another Task
+                              </button>
+                            )}
+                          </div>
                         </div>
                       ))}
 
-                      <button
-                        type="button"
-                        onClick={addTask}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
-                      >
-                        Add Another Task
-                      </button>
+                      {error && (
+                        <div className="text-red-600 dark:text-red-400 mb-4">
+                          <p>{error}</p>
+                        </div>
+                      )}
+                      {taskSuccessMessage && (
+                        <div className="text-green-600 dark:text-green-400 mb-4">
+                          <p>{taskSuccessMessage}</p>
+                        </div>
+                      )}
 
                       <button
                         type="submit"
-                        className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 ml-4"
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-md"
                       >
-                        Submit Tasks
+                        Save Tasks
                       </button>
                     </form>
-                  </div>
-                )}
-
-                {error && (
-                  <div className="mt-4 text-red-600 dark:text-red-400">
-                    <p>Error: {error}</p>
-                  </div>
-                )}
-
-                {successMessage && (
-                  <div className="mt-4 text-green-600 dark:text-green-400">
-                    <p>{successMessage}</p>
                   </div>
                 )}
               </div>

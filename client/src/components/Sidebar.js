@@ -16,8 +16,8 @@ function Sidebar(){
           <Link to="/calendar" className="block py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md">
             Calendar
           </Link>
-          <Link  to="#password" className="block py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md">
-            Password
+          <Link  to="/projects-view" className="block py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md">
+            Projects
           </Link >
           <Link  to="#notifications" className="block py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md">
             Notifications
@@ -25,7 +25,7 @@ function Sidebar(){
           <Link  to="#billing" className="block py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md">
             Billing
           </Link >
-          <Link to="#integrations" className="block py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md">
+          <Link to="/settings" className="block py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md">
             Settings
           </Link >
         </nav>

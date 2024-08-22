@@ -1,104 +1,166 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import Sidebar from "./Sidebar";
+import { getToken } from "./auth";
+import { Link } from "react-router-dom";
+import { FaTrash, FaPlus } from "react-icons/fa"; // Import additional icons
 
 function ProjectView() {
+  const [ownerProjects, setOwnerProjects] = useState([]);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchOwnerProjects = async () => {
+      try {
+        const token = getToken();
+        if (!token) throw new Error('No token found');
+
+        const sessionResponse = await fetch('/check_session', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!sessionResponse.ok) {
+          throw new Error('Failed to fetch session data');
+        }
+
+        const sessionData = await sessionResponse.json();
+
+        const userResponse = await fetch(`/projects`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!userResponse.ok) {
+          throw new Error('Failed to fetch user-related projects');
+        }
+
+        const allProjects = await userResponse.json();
+
+        // Filter projects where the owner ID matches the session data ID
+        const filteredProjects = allProjects.filter(
+          (project) => project.owner_id === sessionData.id
+        );
+
+        setOwnerProjects(filteredProjects);
+      } catch (error) {
+        setError(error.message);
+        console.error('Fetch error:', error.message);
+      }
+    };
+
+    fetchOwnerProjects();
+  }, []);
+
+  const handleDelete = async (projectId) => {
+    try {
+      const token = getToken();
+      if (!token) throw new Error('No token found');
+
+      const response = await fetch(`/projects/${projectId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete project');
+      }
+
+      // Remove the deleted project from the state
+      setOwnerProjects(ownerProjects.filter(project => project.id !== projectId));
+    } catch (error) {
+      setError(error.message);
+      console.error('Delete error:', error.message);
+    }
+  };
+
+  if (error) {
+    return <p className="text-red-600 dark:text-red-400">{error}</p>;
+  }
+
   return (
-    <div className="bg-white dark:bg-gray-800 h-screen">
-      <div className="relative pt-8">
-        <div className="absolute inset-0 h-1/2 bg-gray-100 dark:bg-gray-700"></div>
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-lg mx-auto rounded-lg shadow-lg overflow-hidden lg:max-w-none lg:flex">
-            <div className="flex-1 bg-white dark:bg-gray-900 px-6 py-8 lg:p-12">
-              <h3 className="text-2xl font-extrabold text-gray-900 dark:text-white sm:text-3xl">Project Overview</h3>
-              <p className="mt-6 text-base text-gray-500 dark:text-gray-300">
-                Discover the powerful features of our new software tool designed to streamline your workflow and enhance productivity. This tool integrates seamlessly with your existing systems, providing real-time data insights and intuitive user experience.
-              </p>
-              <div className="mt-8">
-                <div className="flex items-center">
-                  <h4 className="flex-shrink-0 pr-4 bg-white dark:bg-gray-900 text-sm tracking-wider font-semibold uppercase text-rose-600">
-                    Key Features
-                  </h4>
-                  <div className="flex-1 border-t-2 border-gray-200 dark:border-gray-600"></div>
+    <div className="flex h-screen bg-gray-100 dark:bg-gray-800">
+      {/* Sidebar */}
+      <Sidebar />
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="bg-white dark:bg-gray-700 h-full overflow-auto">
+          <div className="relative pt-8">
+            <div className="absolute inset-0 h-1/2 dark:bg-gray-700"></div>
+            <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              {/* Always display the "Create Project" button */}
+              <div className="text-center mb-6">
+                <Link
+                  to="/create-project"
+                  className="inline-flex items-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-white bg-gray-800 dark:bg-gray-700 hover:bg-gray-900 dark:hover:bg-gray-600"
+                >
+                  <FaPlus className="mr-2" size={20} />
+                  Create Project
+                </Link>
+              </div>
+
+              {ownerProjects.length === 0 ? (
+                <div className="text-center p-8 bg-gray-50 dark:bg-gray-900 rounded-lg shadow-lg">
+                  <h2 className="text-2xl font-extrabold text-gray-900 dark:text-white mb-4">
+                    You have no projects
+                  </h2>
+                  <p className="text-gray-500 dark:text-gray-300 mb-6">
+                    Start your journey by creating a new project!
+                  </p>
                 </div>
-                <ul role="list" className="mt-8 space-y-5 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-x-8 lg:gap-y-5">
-                  <li className="flex items-start lg:col-span-1">
-                    <div className="flex-shrink-0">
-                      <svg
-                        className="h-5 w-5 text-green-400 dark:text-green-500"
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                        aria-hidden="true"
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {ownerProjects.map((project) => (
+                    <div
+                      key={project.id}
+                      className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden relative"
+                    >
+                      <button
+                        onClick={() => handleDelete(project.id)}
+                        className="absolute top-2 right-2 text-red-500 hover:text-red-700 dark:hover:text-red-300"
                       >
-                        <path
-                          fillRule="evenodd"
-                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                          clipRule="evenodd"
-                        ></path>
-                      </svg>
+                        <FaTrash size={20} />
+                      </button>
+                      <div className="p-6">
+                        <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
+                          {project.project_name}
+                        </h4>
+                        <p className="text-gray-600 dark:text-gray-400 mb-4">
+                          Deadline: {project.deadline ? new Date(project.deadline).toLocaleDateString() : 'N/A'}
+                        </p>
+                        {project.tasks && project.tasks.length > 0 ? (
+                          <ul className="space-y-2">
+                            {project.tasks.map((task) => (
+                              <li key={task.id} className="border-t pt-2">
+                                <h5 className="font-medium text-gray-800 dark:text-gray-200">
+                                  {task.task_name}
+                                </h5>
+                                <p className="text-gray-600 dark:text-gray-400">
+                                  {task.description}
+                                </p>
+                                <p className="text-gray-500 dark:text-gray-500">
+                                  Status: {task.status}
+                                </p>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p className="text-gray-500 dark:text-gray-400">
+                            No tasks assigned
+                          </p>
+                        )}
+                      </div>
                     </div>
-                    <p className="ml-3 text-sm text-gray-700 dark:text-gray-300">Real-time data integration</p>
-                  </li>
-                  <li className="flex items-start lg:col-span-1">
-                    <div className="flex-shrink-0">
-                      <svg
-                        className="h-5 w-5 text-green-400 dark:text-green-500"
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                        aria-hidden="true"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                          clipRule="evenodd"
-                        ></path>
-                      </svg>
-                    </div>
-                    <p className="ml-3 text-sm text-gray-700 dark:text-gray-300">Seamless integration with existing tools</p>
-                  </li>
-                  <li className="flex items-start lg:col-span-1">
-                    <div className="flex-shrink-0">
-                      <svg
-                        className="h-5 w-5 text-green-400 dark:text-green-500"
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                        aria-hidden="true"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                          clipRule="evenodd"
-                        ></path>
-                      </svg>
-                    </div>
-                    <p className="ml-3 text-sm text-gray-700 dark:text-gray-300">User-friendly interface</p>
-                  </li>
-                </ul>
-              </div>
-            </div>
-            <div className="py-8 px-6 text-center bg-gray-50 dark:bg-gray-900 lg:flex-shrink-0 lg:flex lg:flex-col lg:justify-center lg:p-12">
-              <p className="text-lg leading-6 font-medium text-gray-900 dark:text-white">Special Launch Offer</p>
-              <div className="">
-                <span style={{ opacity: 0.5 }} className="font-mono text-xl md:text-lg font-medium text-gray-400 dark:text-gray-400">$</span>
-                <span style={{ opacity: 0.5 }} className="h1 line-through text-gray-600 dark:text-gray-400">299.99</span>
-                <span className="line-through relative text-gray-600 dark:text-gray-400 text-center text-sm mb-4">/mo</span>
-                <span className="text-red-600 text-sm">Special promotion</span>
-              </div>
-              <div className="mt-4 flex items-center justify-center text-5xl font-extrabold text-gray-900 dark:text-white">
-                <span>$149.99</span>
-                <span className="ml-3 text-xl font-medium text-gray-500 dark:text-gray-400">USD</span>
-              </div>
-              <div className="mt-6">
-                <div className="rounded-md shadow">
-                  <a
-                    href="https://example.com/checkout"
-                    className="flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-white bg-gray-800 dark:bg-gray-700 hover:bg-gray-900 dark:hover:bg-gray-600"
-                  >
-                    Get Started Now
-                  </a>
+                  ))}
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>

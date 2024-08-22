@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Calendar from 'react-calendar';
+import Sidebar from './Sidebar';
 
 const CalendarComponent = () => {
   const [date, setDate] = useState(new Date());
@@ -9,8 +10,10 @@ const CalendarComponent = () => {
   };
 
   return (
-    <div style={{ width: '100%', height: '100%' }}>
-      <h2 style={{ textAlign: 'center', marginBottom: '16px' }}>Calendar</h2>
+    <div style={{  display: 'flex', height: '100vh'  }}>
+       <Sidebar />
+    
+      
       <div style={{ width: '100%', height: '100%' }}>
         <Calendar
           onChange={onChange}

@@ -1,23 +1,74 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import Sidebar from './Sidebar';
+import { getToken } from './auth';
 
 function UpdateProfile() {
   const [formData, setFormData] = useState({
-    fullName: '',
+    full_name: '',
     username: '',
-    phone: '',
     email: '',
-    gender: '',
     role: '',
-    memberNo: '',
-    dateOfBirth: '',
-    memberStatus: '',
-    idNo: '',
+    gender: '',
+    member_no: '',
+    date_of_birth: '',
+    member_status: '',
+    id_no: '',
     address: '',
     password: '',
     confirmPassword: '',
   });
 
-  const [errors, setErrors] = useState({});
+  const [userData, setUserData] = useState(null);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const token = getToken();
+        if (!token) throw new Error('No token found');
+
+        const response = await fetch('/check_session', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        const sessionData = await response.json();
+        if (!response.ok) throw new Error('Failed to fetch session data');
+
+        const userResponse = await fetch(`/users/${sessionData.id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        const userData = await userResponse.json();
+        if (!userResponse.ok) throw new Error('Failed to fetch user details');
+
+        setUserData(userData);
+        setFormData({
+          username: userData.username,
+          email: userData.email,
+          role: userData.role,
+          full_name: userData.full_name,
+          gender: userData.gender,
+          member_no: userData.member_no,
+          date_of_birth: userData.date_of_birth,
+          member_status: userData.member_status,
+          id_no: userData.id_no,
+          address: userData.address,
+          password: '',
+          confirmPassword: '',
+        });
+      } catch (error) {
+        setError(error.message);
+      }
+    };
+
+    fetchUserData();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -30,27 +81,14 @@ function UpdateProfile() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Basic validation
-    const validationErrors = {};
-    if (!formData.fullName) validationErrors.fullName = 'Full Name is required.';
-    if (!formData.username) validationErrors.username = 'Username is required.';
-    if (!formData.phone) validationErrors.phone = 'Phone Number is required.';
-    if (!formData.email) validationErrors.email = 'Email Address is required.';
-    if (!formData.gender) validationErrors.gender = 'Gender is required.';
-    if (!formData.role) validationErrors.role = 'Role is required.';
-    if (!formData.memberNo) validationErrors.memberNo = 'Member No is required.';
-    if (!formData.dateOfBirth) validationErrors.dateOfBirth = 'Date of Birth is required.';
-    if (!formData.memberStatus) validationErrors.memberStatus = 'Member Status is required.';
-    if (!formData.idNo) validationErrors.idNo = 'ID No is required.';
-    if (formData.password !== formData.confirmPassword) validationErrors.confirmPassword = 'Passwords do not match.';
-
-    setErrors(validationErrors);
-    if (Object.keys(validationErrors).length > 0) return;
-
     try {
-      const response = await fetch('/users', {
-        method: 'POST',
+      const token = getToken();
+      if (!token) throw new Error('No token found');
+console.log(formData)
+      const response = await fetch(`/users/${userData.id}`, {
+        method: 'PUT',
         headers: {
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(formData),
@@ -67,33 +105,42 @@ function UpdateProfile() {
     }
   };
 
+  if (error) {
+    return <p className="text-red-600 dark:text-red-400">{error}</p>;
+  }
+
+  if (!userData) {
+    return <p>Loading...</p>;
+  }
+
   return (
-    <div className="flex flex-col min-h-screen bg-gray-100 dark:bg-gray-900">
-      <div className="flex-1 p-8">
+    <div className="flex min-h-screen bg-gray-100 dark:bg-gray-900">
+      <Sidebar />
+
+      <main className="flex-1 p-8">
         <div className="max-w-4xl mx-auto bg-white dark:bg-gray-800 shadow-md rounded-lg">
           <form onSubmit={handleSubmit} className="p-8">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Full Name */}
               <div className="mb-5">
-                <label htmlFor="fullName" className="mb-3 block text-base font-medium text-gray-700 dark:text-gray-300">
-                  Full Name <span className="text-red-500">*</span>
+                <label htmlFor="full_name" className="mb-3 block text-base font-medium text-gray-700 dark:text-gray-300">
+                  Full Name
                 </label>
                 <input
                   type="text"
-                  name="fullName"
-                  id="fullName"
+                  name="full_name"
+                  id="full_name"
                   placeholder="Full Name"
-                  value={formData.fullName}
+                  value={formData.full_name}
                   onChange={handleChange}
                   className="w-full rounded-md border border-gray-300 bg-white dark:bg-gray-700 py-3 px-6 text-base font-medium text-gray-700 dark:text-gray-300 outline-none focus:border-blue-500 focus:shadow-md"
                 />
-                {errors.fullName && <p className="text-red-500 text-sm mt-2">{errors.fullName}</p>}
               </div>
 
               {/* Username */}
               <div className="mb-5">
                 <label htmlFor="username" className="mb-3 block text-base font-medium text-gray-700 dark:text-gray-300">
-                  Username <span className="text-red-500">*</span>
+                  Username
                 </label>
                 <input
                   type="text"
@@ -104,30 +151,12 @@ function UpdateProfile() {
                   onChange={handleChange}
                   className="w-full rounded-md border border-gray-300 bg-white dark:bg-gray-700 py-3 px-6 text-base font-medium text-gray-700 dark:text-gray-300 outline-none focus:border-blue-500 focus:shadow-md"
                 />
-                {errors.username && <p className="text-red-500 text-sm mt-2">{errors.username}</p>}
               </div>
 
-              {/* Phone Number */}
-              <div className="mb-5">
-                <label htmlFor="phone" className="mb-3 block text-base font-medium text-gray-700 dark:text-gray-300">
-                  Phone Number <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="phone"
-                  id="phone"
-                  placeholder="Enter your phone number"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  className="w-full rounded-md border border-gray-300 bg-white dark:bg-gray-700 py-3 px-6 text-base font-medium text-gray-700 dark:text-gray-300 outline-none focus:border-blue-500 focus:shadow-md"
-                />
-                {errors.phone && <p className="text-red-500 text-sm mt-2">{errors.phone}</p>}
-              </div>
-
-              {/* Email Address */}
+              {/* Email */}
               <div className="mb-5">
                 <label htmlFor="email" className="mb-3 block text-base font-medium text-gray-700 dark:text-gray-300">
-                  Email Address <span className="text-red-500">*</span>
+                  Email Address
                 </label>
                 <input
                   type="email"
@@ -138,13 +167,28 @@ function UpdateProfile() {
                   onChange={handleChange}
                   className="w-full rounded-md border border-gray-300 bg-white dark:bg-gray-700 py-3 px-6 text-base font-medium text-gray-700 dark:text-gray-300 outline-none focus:border-blue-500 focus:shadow-md"
                 />
-                {errors.email && <p className="text-red-500 text-sm mt-2">{errors.email}</p>}
+              </div>
+
+              {/* Role */}
+              <div className="mb-5">
+                <label htmlFor="role" className="mb-3 block text-base font-medium text-gray-700 dark:text-gray-300">
+                  Role
+                </label>
+                <input
+                  type="text"
+                  name="role"
+                  id="role"
+                  placeholder="Role"
+                  value={formData.role}
+                  onChange={handleChange}
+                  className="w-full rounded-md border border-gray-300 bg-white dark:bg-gray-700 py-3 px-6 text-base font-medium text-gray-700 dark:text-gray-300 outline-none focus:border-blue-500 focus:shadow-md"
+                />
               </div>
 
               {/* Gender */}
               <div className="mb-5">
                 <label htmlFor="gender" className="mb-3 block text-base font-medium text-gray-700 dark:text-gray-300">
-                  Gender <span className="text-red-500">*</span>
+                  Gender
                 </label>
                 <select
                   name="gender"
@@ -154,164 +198,139 @@ function UpdateProfile() {
                   className="w-full rounded-md border border-gray-300 bg-white dark:bg-gray-700 py-3 px-6 text-base font-medium text-gray-700 dark:text-gray-300 outline-none focus:border-blue-500 focus:shadow-md"
                 >
                   <option value="">Select Gender</option>
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                  <option value="other">Other</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
                 </select>
-                {errors.gender && <p className="text-red-500 text-sm mt-2">{errors.gender}</p>}
-              </div>
-
-              {/* Role */}
-              <div className="mb-5">
-                <label htmlFor="role" className="mb-3 block text-base font-medium text-gray-700 dark:text-gray-300">
-                  Role <span className="text-red-500">*</span>
-                </label>
-                <select
-                  name="role"
-                  id="role"
-                  value={formData.role}
-                  onChange={handleChange}
-                  className="w-full rounded-md border border-gray-300 bg-white dark:bg-gray-700 py-3 px-6 text-base font-medium text-gray-700 dark:text-gray-300 outline-none focus:border-blue-500 focus:shadow-md"
-                >
-                  <option value="">Select Role</option>
-                  <option value="member">Member</option>
-                  <option value="project_owner">Project Owner</option>
-                </select>
-                {errors.role && <p className="text-red-500 text-sm mt-2">{errors.role}</p>}
               </div>
 
               {/* Member No */}
               <div className="mb-5">
-                <label htmlFor="memberNo" className="mb-3 block text-base font-medium text-gray-700 dark:text-gray-300">
-                  Member No <span className="text-red-500">*</span>
+                <label htmlFor="member_no" className="mb-3 block text-base font-medium text-gray-700 dark:text-gray-300">
+                  Member No
                 </label>
                 <input
                   type="text"
-                  name="memberNo"
-                  id="memberNo"
+                  name="member_no"
+                  id="member_no"
                   placeholder="Member No"
-                  value={formData.memberNo}
+                  value={formData.member_no}
                   onChange={handleChange}
                   className="w-full rounded-md border border-gray-300 bg-white dark:bg-gray-700 py-3 px-6 text-base font-medium text-gray-700 dark:text-gray-300 outline-none focus:border-blue-500 focus:shadow-md"
                 />
-                {errors.memberNo && <p className="text-red-500 text-sm mt-2">{errors.memberNo}</p>}
               </div>
 
               {/* Date of Birth */}
               <div className="mb-5">
-                <label htmlFor="dateOfBirth" className="mb-3 block text-base font-medium text-gray-700 dark:text-gray-300">
-                  Date of Birth <span className="text-red-500">*</span>
+                <label htmlFor="date_of_birth" className="mb-3 block text-base font-medium text-gray-700 dark:text-gray-300">
+                  Date of Birth
                 </label>
                 <input
                   type="date"
-                  name="dateOfBirth"
-                  id="dateOfBirth"
-                  value={formData.dateOfBirth}
+                  name="date_of_birth"
+                  id="date_of_birth"
+                  value={formData.date_of_birth}
                   onChange={handleChange}
                   className="w-full rounded-md border border-gray-300 bg-white dark:bg-gray-700 py-3 px-6 text-base font-medium text-gray-700 dark:text-gray-300 outline-none focus:border-blue-500 focus:shadow-md"
                 />
-                {errors.dateOfBirth && <p className="text-red-500 text-sm mt-2">{errors.dateOfBirth}</p>}
               </div>
 
               {/* Member Status */}
               <div className="mb-5">
-                <label htmlFor="memberStatus" className="mb-3 block text-base font-medium text-gray-700 dark:text-gray-300">
-                  Member Status <span className="text-red-500">*</span>
+                <label htmlFor="member_status" className="mb-3 block text-base font-medium text-gray-700 dark:text-gray-300">
+                  Member Status
                 </label>
                 <input
                   type="text"
-                  name="memberStatus"
-                  id="memberStatus"
+                  name="member_status"
+                  id="member_status"
                   placeholder="Member Status"
-                  value={formData.memberStatus}
+                  value={formData.member_status}
                   onChange={handleChange}
                   className="w-full rounded-md border border-gray-300 bg-white dark:bg-gray-700 py-3 px-6 text-base font-medium text-gray-700 dark:text-gray-300 outline-none focus:border-blue-500 focus:shadow-md"
                 />
-                {errors.memberStatus && <p className="text-red-500 text-sm mt-2">{errors.memberStatus}</p>}
               </div>
 
-              {/* ID No */}
+        
+                                {/* ID No */}
               <div className="mb-5">
-                <label htmlFor="idNo" className="mb-3 block text-base font-medium text-gray-700 dark:text-gray-300">
-                  ID No <span className="text-red-500">*</span>
+                <label htmlFor="id_no" className="mb-3 block text-base font-medium text-gray-700 dark:text-gray-300">
+                  ID No
                 </label>
                 <input
                   type="text"
-                  name="idNo"
-                  id="idNo"
-                  placeholder="ID No"
-                  value={formData.idNo}
+                  name="id_no"
+                  id="id_no"
+                  placeholder="ID Number"
+                  value={formData.id_no}
                   onChange={handleChange}
                   className="w-full rounded-md border border-gray-300 bg-white dark:bg-gray-700 py-3 px-6 text-base font-medium text-gray-700 dark:text-gray-300 outline-none focus:border-blue-500 focus:shadow-md"
                 />
-                {errors.idNo && <p className="text-red-500 text-sm mt-2">{errors.idNo}</p>}
               </div>
 
               {/* Address */}
-              <div className="mb-5 col-span-2">
+              <div className="mb-5">
                 <label htmlFor="address" className="mb-3 block text-base font-medium text-gray-700 dark:text-gray-300">
                   Address
                 </label>
-                <textarea
+                <input
+                  type="text"
                   name="address"
                   id="address"
-                  rows="4"
                   placeholder="Address"
                   value={formData.address}
                   onChange={handleChange}
-                  className="w-full rounded-md border border-gray-300 bg-white dark:bg-gray-700 py-3 px-6 text-base font-medium text-gray-700 dark:text-gray-300 outline-none focus:border-blue-500 focus:shadow-md resize-none"
-                />
-                {errors.address && <p className="text-red-500 text-sm mt-2">{errors.address}</p>}
-              </div>
-
-              {/* Password */}
-              <div className="mb-5">
-                <label htmlFor="password" className="mb-3 block text-base font-medium text-gray-700 dark:text-gray-300">
-                  Password
-                </label>
-                <input
-                  type="password"
-                  name="password"
-                  id="password"
-                  placeholder="New Password"
-                  value={formData.password}
-                  onChange={handleChange}
                   className="w-full rounded-md border border-gray-300 bg-white dark:bg-gray-700 py-3 px-6 text-base font-medium text-gray-700 dark:text-gray-300 outline-none focus:border-blue-500 focus:shadow-md"
                 />
-                {errors.password && <p className="text-red-500 text-sm mt-2">{errors.password}</p>}
-              </div>
-
-              {/* Confirm Password */}
-              <div className="mb-5">
-                <label htmlFor="confirmPassword" className="mb-3 block text-base font-medium text-gray-700 dark:text-gray-300">
-                  Confirm Password
-                </label>
-                <input
-                  type="password"
-                  name="confirmPassword"
-                  id="confirmPassword"
-                  placeholder="Confirm Password"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  className="w-full rounded-md border border-gray-300 bg-white dark:bg-gray-700 py-3 px-6 text-base font-medium text-gray-700 dark:text-gray-300 outline-none focus:border-blue-500 focus:shadow-md"
-                />
-                {errors.confirmPassword && <p className="text-red-500 text-sm mt-2">{errors.confirmPassword}</p>}
               </div>
             </div>
 
-            <div className="mt-6 flex justify-end">
+            {/* Password */}
+            <div className="mb-5">
+              <label htmlFor="password" className="mb-3 block text-base font-medium text-gray-700 dark:text-gray-300">
+                New Password (optional)
+              </label>
+              <input
+                type="password"
+                name="password"
+                id="password"
+                placeholder="New Password"
+                value={formData.password}
+                onChange={handleChange}
+                className="w-full rounded-md border border-gray-300 bg-white dark:bg-gray-700 py-3 px-6 text-base font-medium text-gray-700 dark:text-gray-300 outline-none focus:border-blue-500 focus:shadow-md"
+              />
+            </div>
+
+            {/* Confirm Password */}
+            <div className="mb-5">
+              <label htmlFor="confirmPassword" className="mb-3 block text-base font-medium text-gray-700 dark:text-gray-300">
+                Confirm Password
+              </label>
+              <input
+                type="password"
+                name="confirmPassword"
+                id="confirmPassword"
+                placeholder="Confirm Password"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                className="w-full rounded-md border border-gray-300 bg-white dark:bg-gray-700 py-3 px-6 text-base font-medium text-gray-700 dark:text-gray-300 outline-none focus:border-blue-500 focus:shadow-md"
+              />
+            </div>
+
+            <div className="flex justify-end">
               <button
                 type="submit"
-                className="px-6 py-3 bg-blue-500 text-white font-semibold rounded-md shadow-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="rounded-md bg-green-600 text-white py-3 px-6 text-base font-medium hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               >
                 Update Profile
               </button>
             </div>
           </form>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
 
 export default UpdateProfile;
+
