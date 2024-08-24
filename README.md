@@ -148,13 +148,14 @@ Create a .env file in the frontend directory and add the necessary environment v
 Access the Application
 
 The backend will run on http://localhost:5000.
+
 The frontend will be accessible on http://localhost:3000.
-License
+
+
+## License
 This project is licensed under the MIT License. See the LICENSE file for more details.
 
-sql
-Copy code
 
-This `README.md` file provides a comprehensive overview of your Project Management System, including the API endpoints, frontend components, and installation instructions for both the backend and frontend.
+
 
 
