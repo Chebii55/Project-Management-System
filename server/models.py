@@ -87,6 +87,7 @@ class Project(db.Model, SerializerMixin):
             'project_name': self.project_name,
             'deadline': self.deadline.strftime('%Y-%m-%d') if self.deadline else None,
             'owner_id': self.owner_id,
+            'details':self.details,
             'tasks': [task.to_dict() for task in self.tasks]
         }
 

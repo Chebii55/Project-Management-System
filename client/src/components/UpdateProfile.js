@@ -14,12 +14,11 @@ function UpdateProfile() {
     member_status: '',
     id_no: '',
     address: '',
-    password: '',
-    confirmPassword: '',
   });
 
   const [userData, setUserData] = useState(null);
   const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(''); // State for success message
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -29,7 +28,7 @@ function UpdateProfile() {
 
         const response = await fetch('/check_session', {
           headers: {
-            'Authorization': `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
         });
@@ -39,7 +38,7 @@ function UpdateProfile() {
 
         const userResponse = await fetch(`/users/${sessionData.id}`, {
           headers: {
-            'Authorization': `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
         });
@@ -59,8 +58,6 @@ function UpdateProfile() {
           member_status: userData.member_status,
           id_no: userData.id_no,
           address: userData.address,
-          password: '',
-          confirmPassword: '',
         });
       } catch (error) {
         setError(error.message);
@@ -84,11 +81,13 @@ function UpdateProfile() {
     try {
       const token = getToken();
       if (!token) throw new Error('No token found');
-console.log(formData)
+
+      console.log('Submitting formData:', formData); // Console log formData
+
       const response = await fetch(`/users/${userData.id}`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(formData),
@@ -98,9 +97,11 @@ console.log(formData)
         throw new Error('Network response was not ok');
       }
 
-      // Handle successful response
-      alert('Profile updated successfully');
+      setSuccessMessage('Profile updated successfully'); // Set success message
+      setError(null); // Clear any existing errors
     } catch (error) {
+      setSuccessMessage(''); // Clear success message
+      setError('Error updating profile: ' + error.message);
       console.error('Error updating profile:', error);
     }
   };
@@ -119,6 +120,16 @@ console.log(formData)
 
       <main className="flex-1 p-8">
         <div className="max-w-4xl mx-auto bg-white dark:bg-gray-800 shadow-md rounded-lg">
+          {successMessage && (
+            <div className="mb-5 text-green-600 dark:text-green-400 p-4 bg-green-100 dark:bg-green-700 rounded-md">
+              {successMessage}
+            </div>
+          )}
+          {error && (
+            <div className="mb-5 text-red-600 dark:text-red-400 p-4 bg-red-100 dark:bg-red-700 rounded-md">
+              {error}
+            </div>
+          )}
           <form onSubmit={handleSubmit} className="p-8">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Full Name */}
@@ -238,7 +249,7 @@ console.log(formData)
               {/* Member Status */}
               <div className="mb-5">
                 <label htmlFor="member_status" className="mb-3 block text-base font-medium text-gray-700 dark:text-gray-300">
-                  Member Status
+                  Member Status(active/inactive)
                 </label>
                 <input
                   type="text"
@@ -251,8 +262,7 @@ console.log(formData)
                 />
               </div>
 
-        
-                                {/* ID No */}
+              {/* ID No */}
               <div className="mb-5">
                 <label htmlFor="id_no" className="mb-3 block text-base font-medium text-gray-700 dark:text-gray-300">
                   ID No
@@ -261,7 +271,7 @@ console.log(formData)
                   type="text"
                   name="id_no"
                   id="id_no"
-                  placeholder="ID Number"
+                  placeholder="ID No"
                   value={formData.id_no}
                   onChange={handleChange}
                   className="w-full rounded-md border border-gray-300 bg-white dark:bg-gray-700 py-3 px-6 text-base font-medium text-gray-700 dark:text-gray-300 outline-none focus:border-blue-500 focus:shadow-md"
@@ -285,42 +295,10 @@ console.log(formData)
               </div>
             </div>
 
-            {/* Password */}
-            <div className="mb-5">
-              <label htmlFor="password" className="mb-3 block text-base font-medium text-gray-700 dark:text-gray-300">
-                New Password (optional)
-              </label>
-              <input
-                type="password"
-                name="password"
-                id="password"
-                placeholder="New Password"
-                value={formData.password}
-                onChange={handleChange}
-                className="w-full rounded-md border border-gray-300 bg-white dark:bg-gray-700 py-3 px-6 text-base font-medium text-gray-700 dark:text-gray-300 outline-none focus:border-blue-500 focus:shadow-md"
-              />
-            </div>
-
-            {/* Confirm Password */}
-            <div className="mb-5">
-              <label htmlFor="confirmPassword" className="mb-3 block text-base font-medium text-gray-700 dark:text-gray-300">
-                Confirm Password
-              </label>
-              <input
-                type="password"
-                name="confirmPassword"
-                id="confirmPassword"
-                placeholder="Confirm Password"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                className="w-full rounded-md border border-gray-300 bg-white dark:bg-gray-700 py-3 px-6 text-base font-medium text-gray-700 dark:text-gray-300 outline-none focus:border-blue-500 focus:shadow-md"
-              />
-            </div>
-
-            <div className="flex justify-end">
+            <div className="flex justify-center">
               <button
                 type="submit"
-                className="rounded-md bg-green-600 text-white py-3 px-6 text-base font-medium hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                className="mt-4 rounded-md bg-blue-500 py-2 px-4 text-white dark:text-gray-300 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
               >
                 Update Profile
               </button>
@@ -333,4 +311,3 @@ console.log(formData)
 }
 
 export default UpdateProfile;
-

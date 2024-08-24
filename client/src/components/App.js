@@ -11,34 +11,12 @@ import Settings from './Settings';
 import CalendarComponent from './CalenderComponent';
 import UpdateProfile from './UpdateProfile';
 import CreateProject from './CreateProject';
+import About from './About';
+import ViewTasks from './ViewTasks'
+import TaskDetails from './TaskDetails';
+import ViewMembers from './ViewMembers';
 
 const App = () => {
-  // const [user,setUser] = useState(null);
-
-  // useEffect(() => {
-    
-  //   fetch('/check-session',{
-  //   method: 'GET',
-  //   headers: {
-  //     'Authorization':`Bearer ${localStorage.getItem('JWT')}`
-  //   }}
-  //   )
-  //     .then(response => {
-  //       if (!response.ok) {
-  //         throw new Error('Network response was not ok');
-  //       }
-  //       return response.json();
-  //     })
-  //     .then(data => {
-  //       setUser(data)
-          
-        
-  //     })
-  //     .catch(error => {
-  //       console.error('Error checking session:', error);
-  //     });
-  // }, []);
-
   return (
     <Router>
       <div>
@@ -53,6 +31,10 @@ const App = () => {
           <Route path="/calendar" element={<CalendarComponent />} />
           <Route path="/update-profile" element={<UpdateProfile />} /> 
           <Route path="/create-project" element={<CreateProject/>} /> 
+          <Route path="/about" element={<About/>} /> 
+          <Route path="/tasks" element={<ViewTasks/>} /> 
+          <Route path="/tasks/:taskId" element={<TaskDetails/>} /> 
+          <Route path="/members" element={<ViewMembers/>} /> 
        </Routes>
       </div>
     </Router>

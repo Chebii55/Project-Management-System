@@ -192,6 +192,7 @@ class Projects(Resource):
 
                 new_project = Project(
                     project_name=data['project_name'],
+                    details=data['details'],
                     deadline=deadline,  # Set the converted date object
                     owner_id=owner_id
                 )

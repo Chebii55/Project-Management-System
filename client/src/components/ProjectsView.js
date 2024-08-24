@@ -2,53 +2,73 @@ import React, { useState, useEffect } from "react";
 import Sidebar from "./Sidebar";
 import { getToken } from "./auth";
 import { Link } from "react-router-dom";
-import { FaTrash, FaPlus } from "react-icons/fa"; // Import additional icons
+import { FaTrash, FaPlus, FaChevronDown, FaChevronUp } from "react-icons/fa";
 
 function ProjectView() {
   const [ownerProjects, setOwnerProjects] = useState([]);
+  const [users, setUsers] = useState({});
   const [error, setError] = useState(null);
+  const [expandedTask, setExpandedTask] = useState(null);
 
   useEffect(() => {
     const fetchOwnerProjects = async () => {
       try {
         const token = getToken();
-        if (!token) throw new Error('No token found');
+        if (!token) throw new Error("No token found");
 
-        const sessionResponse = await fetch('/check_session', {
+        const sessionResponse = await fetch("/check_session", {
           headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
           },
         });
 
         if (!sessionResponse.ok) {
-          throw new Error('Failed to fetch session data');
+          throw new Error("Failed to fetch session data");
         }
 
         const sessionData = await sessionResponse.json();
 
         const userResponse = await fetch(`/projects`, {
           headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
           },
         });
 
         if (!userResponse.ok) {
-          throw new Error('Failed to fetch user-related projects');
+          throw new Error("Failed to fetch user-related projects");
         }
 
         const allProjects = await userResponse.json();
 
-        // Filter projects where the owner ID matches the session data ID
         const filteredProjects = allProjects.filter(
           (project) => project.owner_id === sessionData.id
         );
 
         setOwnerProjects(filteredProjects);
+
+        const usersResponse = await fetch(`/users`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (!usersResponse.ok) {
+          throw new Error("Failed to fetch user data");
+        }
+
+        const usersData = await usersResponse.json();
+        const usersMap = {};
+        usersData.forEach((user) => {
+          usersMap[user.id] = user.full_name; // Assuming 'full_name' is the property for the user's name
+        });
+
+        setUsers(usersMap);
       } catch (error) {
         setError(error.message);
-        console.error('Fetch error:', error.message);
+        console.error("Fetch error:", error.message);
       }
     };
 
@@ -58,25 +78,41 @@ function ProjectView() {
   const handleDelete = async (projectId) => {
     try {
       const token = getToken();
-      if (!token) throw new Error('No token found');
+      if (!token) throw new Error("No token found");
 
       const response = await fetch(`/projects/${projectId}`, {
-        method: 'DELETE',
+        method: "DELETE",
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
       });
 
       if (!response.ok) {
-        throw new Error('Failed to delete project');
+        throw new Error("Failed to delete project");
       }
 
-      // Remove the deleted project from the state
-      setOwnerProjects(ownerProjects.filter(project => project.id !== projectId));
+      setOwnerProjects(ownerProjects.filter((project) => project.id !== projectId));
     } catch (error) {
       setError(error.message);
-      console.error('Delete error:', error.message);
+      console.error("Delete error:", error.message);
+    }
+  };
+
+  const toggleTaskDetails = (taskId) => {
+    setExpandedTask(expandedTask === taskId ? null : taskId);
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "pending":
+        return "text-red-500";
+      case "in-progress":
+        return "text-blue-500";
+      case "completed":
+        return "text-green-500";
+      default:
+        return "text-gray-500";
     }
   };
 
@@ -86,16 +122,13 @@ function ProjectView() {
 
   return (
     <div className="flex h-screen bg-gray-100 dark:bg-gray-800">
-      {/* Sidebar */}
       <Sidebar />
 
-      {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         <div className="bg-white dark:bg-gray-700 h-full overflow-auto">
           <div className="relative pt-8">
             <div className="absolute inset-0 h-1/2 dark:bg-gray-700"></div>
             <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              {/* Always display the "Create Project" button */}
               <div className="text-center mb-6">
                 <Link
                   to="/create-project"
@@ -132,22 +165,45 @@ function ProjectView() {
                         <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
                           {project.project_name}
                         </h4>
+                        <p className="text-blue-600 dark:text-blue-400 mb-4">
+                        {project.details}
+                        </p>
                         <p className="text-gray-600 dark:text-gray-400 mb-4">
-                          Deadline: {project.deadline ? new Date(project.deadline).toLocaleDateString() : 'N/A'}
+                          Tasks
                         </p>
                         {project.tasks && project.tasks.length > 0 ? (
                           <ul className="space-y-2">
-                            {project.tasks.map((task) => (
+                            {project.tasks.slice(0, 5).map((task) => (
                               <li key={task.id} className="border-t pt-2">
-                                <h5 className="font-medium text-gray-800 dark:text-gray-200">
-                                  {task.task_name}
-                                </h5>
-                                <p className="text-gray-600 dark:text-gray-400">
-                                  {task.description}
-                                </p>
-                                <p className="text-gray-500 dark:text-gray-500">
-                                  Status: {task.status}
-                                </p>
+                                <div
+                                  className="flex justify-between items-center cursor-pointer"
+                                  onClick={() => toggleTaskDetails(task.id)}
+                                >
+                                  <h5 className="font-medium text-gray-800 dark:text-gray-200">
+                                    {task.task_name}
+                                  </h5>
+                                  {expandedTask === task.id ? (
+                                    <FaChevronUp />
+                                  ) : (
+                                    <FaChevronDown />
+                                  )}
+                                </div>
+                                {expandedTask === task.id && (
+                                  <div className="mt-2">
+                                    <p className="text-gray-600 dark:text-gray-400">
+                                      {task.description}
+                                    </p>
+                                    <p className="text-gray-500 dark:text-white">
+                                      Status:{" "}
+                                      <span className={getStatusColor(task.status)}>
+                                        {task.status}
+                                      </span>
+                                    </p>
+                                    <p className="text-white dark:text-white">
+                                      Assigned to: {users[task.assigned_member_id] || "Unknown"}
+                                    </p>
+                                  </div>
+                                )}
                               </li>
                             ))}
                           </ul>

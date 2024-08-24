@@ -29,7 +29,7 @@ def seed_users(n):
             address=fake.address()
         )
         # Use the setter method to hash the password
-        user.password_hash = fake.password()
+        user.password_hash = '12345678'
         db.session.add(user)
     db.session.commit()
 
@@ -75,4 +75,4 @@ if __name__ == '__main__':
         reset_database()  # Reset the database by deleting all existing records
         db.create_all()   # Create tables if they do not exist
         seed_users(30)    # Number of users to generate
-        seed_projects(5)  # Number of projects to generate
+        seed_projects(10)  # Number of projects to generate

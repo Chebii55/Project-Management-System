@@ -1,18 +1,38 @@
 import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import LogoutPopup from "./LogoutPopup"; // Import the LogoutPopup component
+import { removeToken } from "./auth"; // Import removeToken function
 
 function Navbar() {
     const [isOpen, setIsOpen] = useState(false);
+    const [showLogoutPopup, setShowLogoutPopup] = useState(false); // State to control the logout popup
+    const navigate = useNavigate();
 
     const toggleMenu = () => {
         setIsOpen(!isOpen);
     };
 
+    const handleLogoutClick = () => {
+        setShowLogoutPopup(true); // Show the logout popup
+    };
+
+    const confirmLogout = () => {
+        setShowLogoutPopup(false);
+        removeToken(); // Remove the token using the removeToken function
+        console.log('User logged out');
+        navigate('/'); // Redirect to home or login page after logout
+    };
+
+    const cancelLogout = () => {
+        setShowLogoutPopup(false); // Close the popup without logging out
+    };
+
     return (
         <nav className="bg-black p-4">
             <div className="container mx-auto flex flex-col lg:flex-row justify-between items-center">
-                <div className="text-white font-bold text-3xl mb-4 lg:mb-0 hover:text-orange-600 hover:cursor-pointer">
-                    Portfolio
-                </div>
+                <Link to="/dashboard"><div className="text-white font-bold text-3xl mb-4 lg:mb-0 hover:text-blue-600 hover:cursor-pointer">
+                    Project Management System
+                </div></Link>
 
                 <div className="lg:hidden">
                     <button onClick={toggleMenu} className="text-white focus:outline-none">
@@ -34,12 +54,14 @@ function Navbar() {
                 </div>
 
                 <div className={`lg:flex flex-col lg:flex-row ${isOpen ? 'block' : 'hidden'} lg:space-x-4 lg:mt-0 mt-4 flex flex-col items-center text-xl`}>
-                    <a href="/" className="text-white px-4 py-2 hover:text-blue-600">Home</a>
-                    <a href="#Projects" className="text-white px-4 py-2 hover:text-blue-600">Projects</a>
-                    <a href="/" className="text-white px-4 py-2 hover:text-blue-600">About</a>
-                    <a href="/" className="text-white px-4 py-2 hover:text-blue-600">Contact Me</a>
+                    <Link to="/dashboard" className="text-white px-4 py-2 hover:text-blue-600">Home</Link>
+                    <Link to="/projects-view" className="text-white px-4 py-2 hover:text-blue-600">Projects</Link>
+                    <Link to="/about" className="text-white px-4 py-2 hover:text-blue-600">About</Link>
+                    <span onClick={handleLogoutClick} className="text-white px-4 py-2 hover:text-blue-600 cursor-pointer">Log Out</span>
                 </div>
             </div>
+            {/* Logout Popup to confirm logout */}
+            <LogoutPopup show={showLogoutPopup} onConfirm={confirmLogout} onCancel={cancelLogout} />
         </nav>
     );
 }
