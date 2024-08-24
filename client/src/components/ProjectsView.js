@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Sidebar from "./Sidebar";
 import { getToken } from "./auth";
-import { Link } from "react-router-dom";
+import { Link,useNavigate } from "react-router-dom";
 import { FaTrash, FaPlus, FaChevronDown, FaChevronUp } from "react-icons/fa";
 
 function ProjectView() {
@@ -9,12 +9,19 @@ function ProjectView() {
   const [users, setUsers] = useState({});
   const [error, setError] = useState(null);
   const [expandedTask, setExpandedTask] = useState(null);
+  const navigate=useNavigate()
+  const handleViewProject = (projectId) => {
+    navigate(`/projects/${projectId}`); // Navigate to a details page for the task
+};
 
   useEffect(() => {
+    
     const fetchOwnerProjects = async () => {
       try {
         const token = getToken();
-        if (!token) throw new Error("No token found");
+        if (!token){
+          navigate("/error-page")
+        }
 
         const sessionResponse = await fetch("/check_session", {
           headers: {
@@ -41,7 +48,7 @@ function ProjectView() {
         }
 
         const allProjects = await userResponse.json();
-
+        
         const filteredProjects = allProjects.filter(
           (project) => project.owner_id === sessionData.id
         );
@@ -124,7 +131,7 @@ function ProjectView() {
     <div className="flex h-screen bg-gray-100 dark:bg-gray-800">
       <Sidebar />
 
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden bg-cover">
         <div className="bg-white dark:bg-gray-700 h-full overflow-auto">
           <div className="relative pt-8">
             <div className="absolute inset-0 h-1/2 dark:bg-gray-700"></div>
@@ -213,6 +220,10 @@ function ProjectView() {
                           </p>
                         )}
                       </div>
+                      <button onClick={() => handleViewProject(project.id)}class="px-4 py-2 bg-gray-900 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75">
+                          View Project
+                      </button>
+
                     </div>
                   ))}
                 </div>

@@ -121,7 +121,7 @@ function ViewTasks() {
                         className={`px-4 py-2 rounded-lg ${statusFilter === "all" ? "bg-blue-500 text-white" : "border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-600"}`}
                     >
                         All Tasks
-                    </button><br><br></br></br>
+                    </button>
                     <button 
                         onClick={() => setStatusFilter("pending")}
                         className={`px-4 py-2 rounded-lg ${statusFilter === "pending" ? "bg-blue-500 text-white" : "border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-600"}`}

@@ -222,6 +222,7 @@ class ProjectsByID(Resource):
             try:
                 if 'project_name' in data:
                     project.project_name = data['project_name']
+                    project.details = data['details']
                 if 'deadline' in data:
                     # Convert the deadline string to a Python date object
                     project.deadline = datetime.strptime(data['deadline'], '%Y-%m-%d').date()

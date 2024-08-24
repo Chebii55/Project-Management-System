@@ -15,6 +15,8 @@ import About from './About';
 import ViewTasks from './ViewTasks'
 import TaskDetails from './TaskDetails';
 import ViewMembers from './ViewMembers';
+import ProjectDetails from './ProjectDetails';
+import ErrorPage from './ErrorPage';
 
 const App = () => {
   return (
@@ -34,7 +36,9 @@ const App = () => {
           <Route path="/about" element={<About/>} /> 
           <Route path="/tasks" element={<ViewTasks/>} /> 
           <Route path="/tasks/:taskId" element={<TaskDetails/>} /> 
+          <Route path="/projects/:projectId" element={<ProjectDetails/>} /> 
           <Route path="/members" element={<ViewMembers/>} /> 
+          <Route path='/error-page' element={<ErrorPage/>} />
        </Routes>
       </div>
     </Router>

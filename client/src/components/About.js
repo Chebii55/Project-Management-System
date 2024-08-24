@@ -1,7 +1,18 @@
-import React from "react";
+import React, { useEffect } from "react";
 import Sidebar from "./Sidebar";
+import { useNavigate } from "react-router-dom";
+import { getToken } from "./auth";
 
 function About() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = getToken();
+    if (!token) {
+      navigate("/error-page");
+    }
+  }, [navigate]);
+
   return (
     <div className="flex h-screen bg-gray-100 dark:bg-gray-800">
       <Sidebar />
@@ -14,19 +25,17 @@ function About() {
                 <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white mb-4 text-center">
                   Project Management System
                 </h1>
-                <p className="text-gray-600 dark:text-gray-300 mb-4">
+                <p className="text-gray-600 text-[18px] dark:text-gray-300 mb-4">
                   Welcome to our Project Management System, designed to streamline collaboration between Project Managers and Members. Our platform offers secure login and registration, with strict password requirements for enhanced security.
                 </p>
-                <p className="text-gray-600 dark:text-gray-300 mb-4">
+                <p className="text-gray-600 text-[18px] dark:text-gray-300 mb-4">
                   The home page serves as your central hub, featuring a comprehensive dashboard displaying personal profile details such as name, ID number, gender, address, member number, date of birth, member status, and email address.
                 </p>
-                <p className="text-gray-600 dark:text-gray-300 mb-4">
-                  Project Managers have exclusive access to create and manage new projects. Members can view ongoing projects, contribute to them, and see completed projects. The system also facilitates group placements by administrators, who can assign members to various groups and sites. Members can easily view their group assignments and site placements.
+                <p className="text-gray-600 text-[18px] dark:text-gray-300 mb-5">
+                  Project Managers have exclusive access to create and manage new projects. Members can view ongoing projects, contribute to them, and see completed projects. The system also facilitates task allocation by administrators. Members can easily view their group assignments and site placements.
                 </p>
-                <p className="text-gray-600 dark:text-gray-300 mb-4">
-                  Stay informed with our notifications section, keep track of important deadlines with the integrated calendar, and manage your account through the settings. The platform also supports secure storage of user and project data, and allows for easy report generation.
-                </p>
-                <p className="text-gray-600 dark:text-gray-300 text-center">
+                
+                <p className="text-gray-600 text-[12px] dark:text-gray-300 text-center">
                   Thank you for using our Project Management System to enhance your project collaborations.
                 </p>
               </div>

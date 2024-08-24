@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from './Sidebar';
 import { getToken } from './auth';
+import { Link } from 'react-router-dom';
 
 function Dashboard() {
   const [userData, setUserData] = useState(null);
@@ -10,7 +11,11 @@ function Dashboard() {
     const fetchUserData = async () => {
       try {
         const token = getToken();
-        if (!token) throw new Error('No token found');
+        if (!token) {
+          // Redirect to login page if no token is found
+          setError('No token found. Please log in.');
+          return;
+        }
 
         const response = await fetch('/check_session', {
           headers: {
@@ -46,7 +51,22 @@ function Dashboard() {
   }, []);
 
   if (error) {
-    return <p className="text-red-600 dark:text-red-400">{error}</p>;
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-100 dark:bg-gray-900">
+        <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-8 text-center">
+          <h1 className="text-2xl font-bold text-red-600 dark:text-red-400">Error</h1>
+          <p className="mt-4 text-gray-700 dark:text-gray-300">
+          It seems you're not logged in. Please log in to access this page.
+          </p>
+          <Link
+            to="/"
+            className="mt-6 inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md text-white bg-gray-800 dark:bg-gray-700 hover:bg-gray-900 dark:hover:bg-gray-600"
+          >
+            Go to Login
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   if (!userData) {
@@ -55,7 +75,6 @@ function Dashboard() {
 
   return (
     <div className="flex min-h-screen bg-gray-100 dark:bg-gray-900">
-
       <Sidebar />
       <div className="flex-1 flex flex-col p-10 space-y-8 bg-gray-100 dark:bg-gray-900 overflow-y-auto">
         <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6">
