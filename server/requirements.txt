@@ -4,6 +4,6 @@ Flask-Migrate==4.0.4
 Flask-RESTful==0.3.9
 Flask-SQLAlchemy==3.0.5
 Flask-JWT-Extended==4.4.3
-Flask-CORS==3.1.0
+Flask-CORS
 SQLAlchemy==2.0.20
 Faker==18.9.0
